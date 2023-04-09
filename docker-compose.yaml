@@ -1,0 +1,9 @@
+version: '3'
+
+services:
+  local:
+    image: nkaravias/pythondev:${TAG}
+    build: .
+    volumes:
+    - $PWD:/app
+    entrypoint: /bin/bash
