@@ -15,14 +15,14 @@ def is_git_repo(directory):
         return False
 
 
-def get_changed_files(directory):
+def get_changed_files(directory, commit):
     if not is_git_repo(directory):
         print(f"{directory} is not a git repository")
         return []
 
     try:
         # Get the SHA of the latest commit
-        sha = check_output(['git', 'rev-parse', 'HEAD'], cwd=directory).decode().strip()
+        sha = check_output(['git', 'rev-parse', commit], cwd=directory).decode().strip()
 
         # Get a list of changed files since the last commit
         changed_files = check_output(['git', 'diff-tree', '--no-commit-id',
@@ -44,8 +44,9 @@ def output_files(files, output_format, output_file, logger):
     elif output_format == 'csv':
         output = ','.join(files)
     else:
-        logger.error(f"Invalid output format: {output_format}")
-        return
+        error_msg = f"Invalid output format: {output_format}"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
 
     if output_file:
         with open(output_file, 'w') as f:
@@ -69,7 +70,9 @@ if __name__ == '__main__':
     parser.add_argument('-f', '--output-file', type=str,
                         help='the file to write the output to')
     parser.add_argument('-v', '--verbose', action='store_true',
-                        help='print verbose output to stdout')
+                        help='print verbose output to stdout'),
+    parser.add_argument('-c', '--commit', type=str, default='HEAD',
+                        help='commit sha (default: HEAD)')
     args = parser.parse_args()
 
     logger = logging.getLogger(__name__)
@@ -87,5 +90,5 @@ if __name__ == '__main__':
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
 
-    changed_files = get_changed_files(args.directory)
+    changed_files = get_changed_files(args.directory, args.commit)
     output_files(changed_files, args.output_format, args.output_file, logger)
